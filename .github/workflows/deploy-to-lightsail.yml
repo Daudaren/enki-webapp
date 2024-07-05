@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -32,7 +32,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -42,34 +42,35 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
-      - name: Create deployment JSON
+      - name: Create containers JSON
         run: |
-          echo '{
-            "containers": [
-              {
-                "name": "web",
-                "image": "${{ env.image }}",
-                "ports": {
-                  "5000": "HTTP"
-                }
-              }
-            ],
-            "publicEndpoint": {
-              "containerName": "web",
-              "containerPort": 5000,
-              "healthCheck": {
-                "path": "/",
-                "successCodes": "200"
+          echo '[
+            {
+              "name": "web",
+              "image": "${{ env.image }}",
+              "ports": {
+                "5000": "HTTP"
               }
             }
-          }' > deployment.json
+          ]' > containers.json
+
+      - name: Create public endpoint JSON
+        run: |
+          echo '{
+            "containerName": "web",
+            "containerPort": 5000,
+            "healthCheck": {
+              "path": "/",
+              "successCodes": "200"
+            }
+          }' > public-endpoint.json
 
       - name: Update Lightsail Container Service
         run: |
           aws lightsail create-container-service-deployment \
             --service-name ${{ env.LIGHTSAIL_SERVICE_NAME }} \
-            --containers file://deployment.json \
-            --public-endpoint file://deployment.json \
+            --containers file://containers.json \
+            --public-endpoint file://public-endpoint.json \
             --region ${{ env.AWS_REGION }}
