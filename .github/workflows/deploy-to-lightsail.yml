@@ -44,33 +44,31 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
-      - name: Create containers JSON
-        run: |
-          echo '[
-            {
-              "name": "web",
-              "image": "${{ env.image }}",
-              "ports": {
-                "5000": "HTTP"
-              }
-            }
-          ]' > containers.json
-
-      - name: Create public endpoint JSON
+      - name: Create deployment JSON
         run: |
           echo '{
-            "containerName": "web",
-            "containerPort": 5000,
-            "healthCheck": {
-              "path": "/",
-              "successCodes": "200"
+            "containers": {
+              "web": {
+                "image": "${{ env.image }}",
+                "ports": {
+                  "5000": "HTTP"
+                }
+              }
+            },
+            "publicEndpoint": {
+              "containerName": "web",
+              "containerPort": 5000,
+              "healthCheck": {
+                "path": "/",
+                "successCodes": "200"
+              }
             }
-          }' > public-endpoint.json
+          }' > deployment.json
 
       - name: Update Lightsail Container Service
         run: |
           aws lightsail create-container-service-deployment \
             --service-name ${{ env.LIGHTSAIL_SERVICE_NAME }} \
-            --containers file://containers.json \
-            --public-endpoint file://public-endpoint.json \
+            --containers "$(cat deployment.json | jq '.containers')" \
+            --public-endpoint "$(cat deployment.json | jq '.publicEndpoint')" \
             --region ${{ env.AWS_REGION }}
