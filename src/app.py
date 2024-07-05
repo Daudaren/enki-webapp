@@ -1,11 +1,12 @@
-
 from flask import Flask, render_template
+
 app = Flask(__name__)
 
 
 @app.route('/')
 def home():
     return render_template('index.html')
+
 
 @app.route('/generic.html')
 def generic():
@@ -15,6 +16,11 @@ def generic():
 @app.route('/elements.html')
 def elements():
     return render_template('elements.html')
+
+
+@app.route('/index.html')
+def index():
+    return render_template('index.html')
 
 
 if __name__ == "__main__":
