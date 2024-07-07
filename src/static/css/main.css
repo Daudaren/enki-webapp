@@ -4154,3 +4154,26 @@ input, select, textarea {
 		}
 
 	}
+
+	/* Example styles to be added or adjusted in main.css */
+
+    .image.featured {
+        width: 100%;
+        height: auto;
+        border-radius: 5px;
+    }
+
+    .box.special {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .box.special h3 {
+        margin-top: 10px;
+        font-size: 1.5em;
+    }
+
+    .box.special p {
+        font-size: 1em;
+        color: #666;
+    }

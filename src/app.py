@@ -17,6 +17,10 @@ def generic():
 def elements():
     return render_template('elements.html')
 
+@app.route('/employees.html')
+def employees():
+    return render_template('employees.html')
+
 
 @app.route('/index.html')
 def index():
